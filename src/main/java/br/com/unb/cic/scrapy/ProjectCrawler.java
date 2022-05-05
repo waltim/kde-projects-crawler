@@ -1,5 +1,6 @@
 package br.com.unb.cic.scrapy;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -11,16 +12,22 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
+
+import br.com.unb.cic.entities.Project;
+import br.com.unb.cic.enums.IOEnum;
 
 public class ProjectCrawler {
 
-	public static Map<String, Map<String, String>> crawler(Map<String, String> projects) throws InterruptedException {
+	public static ArrayList<Project> crawler(Map<String, String> projects) throws InterruptedException {
 
-		Map<String, Map<String, String>> dataset = new HashMap<String, Map<String, String>>();
+		ArrayList<Project> dataset = new ArrayList<Project>();
 
 		for (var entry : projects.entrySet()) {
-			System.setProperty("webdriver.chrome.driver", "/usr/local/bin/chromedriver");
-			WebDriver driver = new ChromeDriver();
+			System.setProperty("webdriver.chrome.driver", IOEnum.PATH_CHROME_DRIVER.getProperty());
+			ChromeOptions opt = new ChromeOptions();
+			opt.addArguments("headless");
+			WebDriver driver = new ChromeDriver(opt);
 			driver.get(entry.getValue());
 			Thread.sleep(3000);
 			Document page = Jsoup.parse(driver.getPageSource());
@@ -41,13 +48,15 @@ public class ProjectCrawler {
 				if (languages.containsKey("C++")) {
 					String maxKey = Collections
 							.max(languages.entrySet(), Comparator.comparingDouble(Map.Entry::getValue)).getKey();
-					if (maxKey.equals(new String("C++"))) {
-						Map<String, String> project = new HashMap<String, String>();
+					if (maxKey.equals(new String("C++")) && languages.get("C++") > 50.0) {
 						String kdeGroup = page.select("a.breadcrumb-item-text").text();
 						String projectName = page.select("h1.home-panel-title").text();
 						String gitUrl = page.select("input.qa-http-clone-url").attr("value");
-						project.put(projectName, gitUrl);
-						dataset.put(kdeGroup, project);
+						Integer stars = Integer.parseInt(page.select("a.star-count").text());
+						String cmts = page.select("strong.project-stat-value").first().text();
+						Integer commits = Integer.parseInt(cmts.replaceAll(",", ""));
+						Project pj = new Project(kdeGroup, projectName, gitUrl, stars, commits);
+						dataset.add(pj);
 						driver.close();
 					} else {
 						driver.close();

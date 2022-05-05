@@ -10,6 +10,9 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
+
+import br.com.unb.cic.enums.IOEnum;
 
 public class GroupCrawler {
 
@@ -17,14 +20,15 @@ public class GroupCrawler {
 
 		ArrayList<String> projects = new ArrayList<String>();
 		Integer pages = urlNumberPages(url);
-//		System.out.println(pages);
+
 		if (pages != null) {
 			String paginator = "?&page=";
 			for (int i = 1; i < pages + 1; i++) {
-				System.setProperty("webdriver.chrome.driver", "/usr/local/bin/chromedriver");
-				WebDriver driver = new ChromeDriver();
+				System.setProperty("webdriver.chrome.driver", IOEnum.PATH_CHROME_DRIVER.getProperty());
+				ChromeOptions opt = new ChromeOptions();
+				opt.addArguments("headless");
+				WebDriver driver = new ChromeDriver(opt);
 				String urlPage = url + paginator + i;
-				System.out.println(urlPage);
 				driver.get(urlPage);
 				Thread.sleep(3000);
 				Document doc = Jsoup.parse(driver.getPageSource());
@@ -40,8 +44,10 @@ public class GroupCrawler {
 				driver.close();
 			}
 		} else {
-			System.setProperty("webdriver.chrome.driver", "/usr/local/bin/chromedriver");
-			WebDriver driver = new ChromeDriver();
+			System.setProperty("webdriver.chrome.driver", IOEnum.PATH_CHROME_DRIVER.getProperty());
+			ChromeOptions opt = new ChromeOptions();
+			opt.addArguments("headless");
+			WebDriver driver = new ChromeDriver(opt);
 			driver.get(url);
 			Thread.sleep(3000);
 			Document doc = Jsoup.parse(driver.getPageSource());
@@ -69,8 +75,10 @@ public class GroupCrawler {
 			if (pages != null) {
 				String paginator = "?&page=";
 				for (int i = 1; i < pages + 1; i++) {
-					System.setProperty("webdriver.chrome.driver", "/usr/local/bin/chromedriver");
-					WebDriver driver = new ChromeDriver();
+					System.setProperty("webdriver.chrome.driver", IOEnum.PATH_CHROME_DRIVER.getProperty());
+					ChromeOptions opt = new ChromeOptions();
+					opt.addArguments("headless");
+					WebDriver driver = new ChromeDriver(opt);
 					String urlPage = url + paginator + i;
 					driver.get(urlPage);
 					Thread.sleep(3000);
@@ -88,8 +96,10 @@ public class GroupCrawler {
 					driver.close();
 				}
 			} else {
-				System.setProperty("webdriver.chrome.driver", "/usr/local/bin/chromedriver");
-				WebDriver driver = new ChromeDriver();
+				System.setProperty("webdriver.chrome.driver", IOEnum.PATH_CHROME_DRIVER.getProperty());
+				ChromeOptions opt = new ChromeOptions();
+				opt.addArguments("headless");
+				WebDriver driver = new ChromeDriver(opt);
 				driver.get(url);
 				Thread.sleep(3000);
 				Document doc = Jsoup.parse(driver.getPageSource());
@@ -112,8 +122,10 @@ public class GroupCrawler {
 	}
 
 	public static Integer urlNumberPages(String url) throws InterruptedException {
-		System.setProperty("webdriver.chrome.driver", "/usr/local/bin/chromedriver");
-		WebDriver driver = new ChromeDriver();
+		System.setProperty("webdriver.chrome.driver", IOEnum.PATH_CHROME_DRIVER.getProperty());
+		ChromeOptions opt = new ChromeOptions();
+		opt.addArguments("headless");
+		WebDriver driver = new ChromeDriver(opt);
 		driver.get(url);
 		Thread.sleep(3000);
 		Document doc = Jsoup.parse(driver.getPageSource());

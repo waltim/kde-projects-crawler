@@ -1,9 +1,10 @@
 package br.com.unb.cic.application;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.Map;
 
+import br.com.unb.cic.entities.Project;
 import br.com.unb.cic.scrapy.GroupCrawler;
 import br.com.unb.cic.scrapy.ProjectCrawler;
 
@@ -12,26 +13,20 @@ public class Program {
 	public static void main(String[] args) throws InterruptedException {
 
 		ArrayList<String> groups = GroupCrawler.crawler("https://invent.kde.org/explore/groups");
-		System.out.println(groups.size());
-//		for (String string : groups) {
-//			System.out.println(string);
-//		}
-		Map<String, String> projects = GroupCrawler.crawler(groups);
-		System.out.println(projects.size());
-//		for (var entry : projects.entrySet()) {
-//			System.out.println(entry.getKey() + " --> " + entry.getValue());
-//		}
-		
-//		Map<String, String> projects = new HashMap<String, String>();
-//		projects.put("Akonadi Calendar", "https://invent.kde.org/pim/akonadi-calendar");
 
-		Map<String, Map<String, String>> dataset = ProjectCrawler.crawler(projects);
-		System.out.println(dataset.size());
-		for (var entry : dataset.entrySet()) {
-			for (var project : entry.getValue().entrySet()) {
-				System.out.println(
-						"Group: " + entry.getKey() + ", Project: " + project.getKey() + ", Url: " + project.getValue());
-			}
+		Map<String, String> projects = GroupCrawler.crawler(groups);
+
+		ArrayList<Project> dataset = ProjectCrawler.crawler(projects);
+
+		System.out.println("Number of Groups: " + groups.size());
+		System.out.println("Number of links: " + projects.size());
+		System.out.println("Number of Projects: " + dataset.size());
+
+		Collections.sort(dataset, Project.ProjectComparator);
+
+		for (Project project : dataset) {
+			System.out.println(project.getGroup() + "," + project.getName() + "," + project.getUrl() + ","
+					+ project.getCommits() + "," + project.getStars());
 		}
 	}
 }
