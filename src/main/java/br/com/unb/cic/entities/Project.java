@@ -1,29 +1,54 @@
 package br.com.unb.cic.entities;
 
-import java.util.Comparator;
+import java.time.LocalDate;
 
 public class Project {
 
-	private String group;
 	private String name;
 	private String url;
 	private Integer stars;
 	private Integer commits;
+	private Double percentCppCode;
+	private String language;
 
-	public Project(String group, String name, String url, Integer stars, Integer commits) {
-		this.group = group;
+	// githubApi
+	private Boolean fork;
+	private LocalDate created;
+	private LocalDate pushed;
+
+	public Project(String name, String url, Integer stars, Integer commits, Double percentCppCode, String language,
+			LocalDate pushed) {
 		this.name = name;
 		this.url = url;
 		this.stars = stars;
 		this.commits = commits;
+		this.percentCppCode = percentCppCode;
+		this.fork = false;
+		this.created = null;
+		this.pushed = pushed;
+		this.language = language;
+
 	}
 
-	public String getGroup() {
-		return group;
+	public Project(String name, String url, Integer stars, Integer commits, Boolean fork, LocalDate created,
+			LocalDate pushed, Double percentCppCode, String language) {
+		this.name = name;
+		this.url = url;
+		this.stars = stars;
+		this.commits = commits;
+		this.fork = fork;
+		this.created = created;
+		this.pushed = pushed;
+		this.percentCppCode = percentCppCode;
+		this.language = language;
 	}
 
-	public void setGroup(String group) {
-		this.group = group;
+	public String getLanguage() {
+		return language;
+	}
+
+	public void setLanguage(String language) {
+		this.language = language;
 	}
 
 	public String getName() {
@@ -57,18 +82,44 @@ public class Project {
 	public void setCommits(Integer commits) {
 		this.commits = commits;
 	}
-	
-	public static Comparator<Project> ProjectComparator = new Comparator<Project>() {
 
-		public int compare(Project p1, Project p2) {
+	public Double getPercentCppCode() {
+		return percentCppCode;
+	}
 
-			String ProjectGroup1 = p1.getGroup().toUpperCase();
-			String ProjectGroup2 = p2.getGroup().toUpperCase();
+	public void setPercentCppCode(Double percentCppCode) {
+		this.percentCppCode = percentCppCode;
+	}
 
-			// ascending order
-			return ProjectGroup1.compareTo(ProjectGroup2);
+	public Boolean getFork() {
+		return fork;
+	}
 
-		}
-	};
+	public void setFork(Boolean fork) {
+		this.fork = fork;
+	}
+
+	public LocalDate getCreated() {
+		return created;
+	}
+
+	public void setCreated(LocalDate created) {
+		this.created = created;
+	}
+
+	public LocalDate getPushed() {
+		return pushed;
+	}
+
+	public void setPushed(LocalDate pushed) {
+		this.pushed = pushed;
+	}
+
+	@Override
+	public String toString() {
+		return "Project [name=" + name + ", url=" + url + ", stars=" + stars + ", commits=" + commits
+				+ ", percentCppCode=" + percentCppCode + ", language=" + language + ", fork=" + fork + ", created="
+				+ created + ", pushed=" + pushed + "]";
+	}
 
 }

@@ -1,10 +1,6 @@
 package br.com.unb.cic.scrapy;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -14,60 +10,58 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 
-import br.com.unb.cic.entities.Project;
 import br.com.unb.cic.enums.IOEnum;
 
 public class ProjectCrawler {
 
-	public static ArrayList<Project> crawler(Map<String, String> projects) throws InterruptedException {
+	public static ArrayList<String> crawler(String url, String organization) throws InterruptedException {
 
-		ArrayList<Project> dataset = new ArrayList<Project>();
+		ArrayList<String> projects = new ArrayList<String>();
+		Integer pages = 1;
+		Boolean newPage = false;
 
-		for (var entry : projects.entrySet()) {
+		do {
+			newPage = false;
 			System.setProperty("webdriver.chrome.driver", IOEnum.PATH_CHROME_DRIVER.getProperty());
 			ChromeOptions opt = new ChromeOptions();
 			opt.addArguments("headless");
 			WebDriver driver = new ChromeDriver(opt);
-			driver.get(entry.getValue());
-			Thread.sleep(3000);
-			Document page = Jsoup.parse(driver.getPageSource());
-			Elements body = page.select("div.progress");
-			if (body != null) {
-				Map<String, Double> languages = new HashMap<String, Double>();
-				for (Element element : body.select("div.progress-bar")) {
-					String html = element.attr("title");
 
-					Document doc = Jsoup.parse(html);
-
-					String language = doc.select("span.repository-language-bar-tooltip-language").text();
-					String width = doc.select("span.repository-language-bar-tooltip-share").text().replaceAll("%", "");
-
-					Double percent = Double.parseDouble(width);
-					languages.put(language, percent);
-				}
-				if (languages.containsKey("C++")) {
-					String maxKey = Collections
-							.max(languages.entrySet(), Comparator.comparingDouble(Map.Entry::getValue)).getKey();
-					if (maxKey.equals(new String("C++")) && languages.get("C++") > 50.0) {
-						String kdeGroup = page.select("a.breadcrumb-item-text").text();
-						String projectName = page.select("h1.home-panel-title").text();
-						String gitUrl = page.select("input.qa-http-clone-url").attr("value");
-						Integer stars = Integer.parseInt(page.select("a.star-count").text());
-						String cmts = page.select("strong.project-stat-value").first().text();
-						Integer commits = Integer.parseInt(cmts.replaceAll(",", ""));
-						Project pj = new Project(kdeGroup, projectName, gitUrl, stars, commits);
-						dataset.add(pj);
-						driver.close();
-					} else {
-						driver.close();
-					}
-				} else {
-					driver.close();
-				}
-			} else {
-				driver.close();
+			if (pages > 1) {
+				url = "https://github.com/orgs/" + organization.toUpperCase() + "/repositories?page=" + pages;
 			}
-		}
-		return dataset;
+			System.out.println(url);
+			driver.get(url);
+			Thread.sleep(1000);
+			Document doc = Jsoup.parse(driver.getPageSource());
+			Element div = doc.selectFirst("div.repo-list");
+			Element body = div.select("ul").first();
+
+			for (Element e : body.select("li")) {
+
+				Element link = e.select("a.d-inline-block").first();
+				String href = link.attr("href");
+				String project = "https://github.com" + href;
+				projects.add(project);
+			}
+
+			Elements pagination = doc.select("div.pagination");
+
+			for (Element e : pagination.select("a")) {
+				String rel = e.attr("rel");
+				if (rel.equals("next")) {
+					newPage = true;
+				}
+			}
+
+			if (newPage) {
+				pages++;
+			}
+
+			driver.close();
+		} while (newPage);
+		System.out.println("Number of pages crawled: " + pages);
+		return projects;
 	}
+
 }

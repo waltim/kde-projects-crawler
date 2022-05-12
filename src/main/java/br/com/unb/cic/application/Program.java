@@ -1,32 +1,30 @@
 package br.com.unb.cic.application;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Map;
 
 import br.com.unb.cic.entities.Project;
-import br.com.unb.cic.scrapy.GroupCrawler;
-import br.com.unb.cic.scrapy.ProjectCrawler;
+import br.com.unb.cic.scrapy.ProjectScrapper;
 
 public class Program {
 
 	public static void main(String[] args) throws InterruptedException {
 
-		ArrayList<String> groups = GroupCrawler.crawler("https://invent.kde.org/explore/groups");
+//		ArrayList<String> repositories = ProjectCrawler.crawler("https://github.com/orgs/KDE/repositories","KDE");
 
-		Map<String, String> projects = GroupCrawler.crawler(groups);
+		ArrayList<String> repositories = new ArrayList<String>();
+		repositories.add("https://github.com/KDE/incidenceeditor");
+		repositories.add("https://github.com/KDE/grantleetheme");
+		repositories.add("https://github.com/KDE/calendarsupport");
+		repositories.add("https://github.com/KDE/kdepim-addons");
+		repositories.add("https://github.com/KDE/kdepim-runtime");
+		repositories.add("https://github.com/KDE/pim-sieve-editor");
 
-		ArrayList<Project> dataset = ProjectCrawler.crawler(projects);
+		ArrayList<Project> projects = ProjectScrapper.scrapper(repositories);
 
-		System.out.println("Number of Groups: " + groups.size());
-		System.out.println("Number of links: " + projects.size());
-		System.out.println("Number of Projects: " + dataset.size());
+		System.out.println("Number of Repositories: " + repositories.size());
 
-		Collections.sort(dataset, Project.ProjectComparator);
-
-		for (Project project : dataset) {
-			System.out.println(project.getGroup() + "," + project.getName() + "," + project.getUrl() + ","
-					+ project.getCommits() + "," + project.getStars());
+		for (Project project : projects) {
+			System.out.println(project);
 		}
 	}
 }
