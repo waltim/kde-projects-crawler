@@ -1,11 +1,5 @@
 package br.com.unb.cic.utils;
 
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Map;
-
-import br.com.unb.cic.entities.Project;
-
 public class DatasetFilter {
 
 //	if (languages.containsKey("C++")) {

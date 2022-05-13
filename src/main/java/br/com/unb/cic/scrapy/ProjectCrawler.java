@@ -30,16 +30,19 @@ public class ProjectCrawler {
 			if (pages > 1) {
 				url = "https://github.com/orgs/" + organization.toUpperCase() + "/repositories?page=" + pages;
 			}
-			System.out.println(url);
 			driver.get(url);
-			Thread.sleep(1000);
+			try {
+				Thread.sleep(2000);
+			} catch (InterruptedException e1) {
+				e1.printStackTrace();
+			}
 			Document doc = Jsoup.parse(driver.getPageSource());
 			Element div = doc.selectFirst("div.repo-list");
-			Element body = div.select("ul").first();
+			Element body = div.selectFirst("ul");
 
 			for (Element e : body.select("li")) {
 
-				Element link = e.select("a.d-inline-block").first();
+				Element link = e.selectFirst("a.d-inline-block");
 				String href = link.attr("href");
 				String project = "https://github.com" + href;
 				projects.add(project);

@@ -10,11 +10,11 @@ public class Project {
 	private Integer commits;
 	private Double percentCppCode;
 	private String language;
-
+	private LocalDate pushed;
 	// githubApi
 	private Boolean fork;
 	private LocalDate created;
-	private LocalDate pushed;
+	
 
 	public Project(String name, String url, Integer stars, Integer commits, Double percentCppCode, String language,
 			LocalDate pushed) {
@@ -117,9 +117,7 @@ public class Project {
 
 	@Override
 	public String toString() {
-		return "Project [name=" + name + ", url=" + url + ", stars=" + stars + ", commits=" + commits
-				+ ", percentCppCode=" + percentCppCode + ", language=" + language + ", fork=" + fork + ", created="
-				+ created + ", pushed=" + pushed + "]";
+		return name + ","+ url +"," + stars + "," +commits+ "," + percentCppCode + "," + language +"," + fork + ","+ created + "," + pushed;
 	}
 
 }
