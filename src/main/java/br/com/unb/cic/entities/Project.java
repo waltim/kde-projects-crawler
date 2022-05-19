@@ -4,9 +4,10 @@ import java.time.LocalDate;
 
 public class Project {
 
+	private String organization;
 	private String name;
 	private String url;
-	private Integer stars;
+	private Double stars;
 	private Integer commits;
 	private Double percentCppCode;
 	private String language;
@@ -14,24 +15,11 @@ public class Project {
 	// githubApi
 	private Boolean fork;
 	private LocalDate created;
-	
+	private Integer contributors;
 
-	public Project(String name, String url, Integer stars, Integer commits, Double percentCppCode, String language,
-			LocalDate pushed) {
-		this.name = name;
-		this.url = url;
-		this.stars = stars;
-		this.commits = commits;
-		this.percentCppCode = percentCppCode;
-		this.fork = false;
-		this.created = null;
-		this.pushed = pushed;
-		this.language = language;
-
-	}
-
-	public Project(String name, String url, Integer stars, Integer commits, Boolean fork, LocalDate created,
-			LocalDate pushed, Double percentCppCode, String language) {
+	public Project(String organization, String name, String url, Double stars, Integer commits, Integer contributors,
+			Boolean fork, LocalDate created, LocalDate pushed, Double percentCppCode, String language) {
+		this.organization = organization;
 		this.name = name;
 		this.url = url;
 		this.stars = stars;
@@ -41,6 +29,7 @@ public class Project {
 		this.pushed = pushed;
 		this.percentCppCode = percentCppCode;
 		this.language = language;
+		this.contributors = contributors;
 	}
 
 	public String getLanguage() {
@@ -67,11 +56,11 @@ public class Project {
 		this.url = url;
 	}
 
-	public Integer getStars() {
+	public Double getStars() {
 		return stars;
 	}
 
-	public void setStars(Integer stars) {
+	public void setStars(Double stars) {
 		this.stars = stars;
 	}
 
@@ -115,9 +104,25 @@ public class Project {
 		this.pushed = pushed;
 	}
 
-	@Override
-	public String toString() {
-		return name + ","+ url +"," + stars + "," +commits+ "," + percentCppCode + "," + language +"," + fork + ","+ created + "," + pushed;
+	public Integer getContributors() {
+		return contributors;
 	}
 
+	public void setContributors(Integer contributors) {
+		this.contributors = contributors;
+	}
+
+	public String getOrganization() {
+		return organization;
+	}
+
+	public void setOrganization(String organization) {
+		this.organization = organization;
+	}
+
+	@Override
+	public String toString() {
+		return organization + ", " + name + ", " + url + ", " + stars + ", " + commits + ", " + contributors + ", "
+				+ language + ", " + percentCppCode + ", " + fork + ", " + created + ", " + pushed;
+	}
 }

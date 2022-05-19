@@ -1,11 +1,13 @@
 package br.com.unb.cic.scrapy;
 
 import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -14,6 +16,7 @@ import br.com.unb.cic.enums.IOEnum;
 
 public class ProjectCrawler {
 
+	@SuppressWarnings("deprecation")
 	public static ArrayList<String> crawler(String url, String organization) throws InterruptedException {
 
 		ArrayList<String> projects = new ArrayList<String>();
@@ -31,11 +34,19 @@ public class ProjectCrawler {
 				url = "https://github.com/orgs/" + organization.toUpperCase() + "/repositories?page=" + pages;
 			}
 			driver.get(url);
-			try {
-				Thread.sleep(2000);
-			} catch (InterruptedException e1) {
-				e1.printStackTrace();
-			}
+			driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
+			int count = 0;
+			do {
+				System.out.println("wait a seconds...");
+				Thread.sleep(5000);
+				count++;
+				if (count > 2) {
+					driver.quit();
+					newPage = true;
+					continue;
+				}
+			} while (driver.findElements(By.className("Box-row")).isEmpty());
+
 			Document doc = Jsoup.parse(driver.getPageSource());
 			Element div = doc.selectFirst("div.repo-list");
 			Element body = div.selectFirst("ul");
@@ -61,7 +72,7 @@ public class ProjectCrawler {
 				pages++;
 			}
 
-			driver.close();
+			driver.quit();
 		} while (newPage);
 		System.out.println("Number of pages crawled: " + pages);
 		return projects;

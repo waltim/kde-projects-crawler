@@ -1,19 +1,30 @@
 package br.com.unb.cic.scrapy;
 
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+
+import com.google.gson.Gson;
 
 import br.com.unb.cic.entities.Project;
 import br.com.unb.cic.enums.IOEnum;
@@ -24,7 +35,9 @@ public class ProjectScrapper {
 
 //	#find repos by organization - https://api.github.com/repos/kde/kscreenlocker
 
-	public static ArrayList<Project> scrapper(ArrayList<String> projects, String organization) {
+	@SuppressWarnings("deprecation")
+	public static ArrayList<Project> scrapper(ArrayList<String> projects, String organization)
+			throws InterruptedException {
 
 		ArrayList<Project> dataset = new ArrayList<Project>();
 
@@ -33,17 +46,36 @@ public class ProjectScrapper {
 			ChromeOptions opt = new ChromeOptions();
 			opt.addArguments("headless");
 			WebDriver driver = new ChromeDriver(opt);
+			driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
 			driver.get(project);
-			try {
-				Thread.sleep(2000);
-			} catch (InterruptedException e1) {
-				e1.printStackTrace();
+			System.out.println(project);
+			int count = 0;
+			do {
+				System.out.println("wait a seconds...");
+				Thread.sleep(5000);
+				if (!driver.findElements(By.xpath("//*[contains(text(),'This repository is empty.')]")).isEmpty()) {
+					driver.quit();
+					count = 100;
+					break;
+				}
+				count++;
+				if (count > 2) {
+					driver.quit();
+					count = 100;
+					break;
+				}
+			} while (driver.findElements(By.className("Box-row--focus-gray")).isEmpty());
+			if (count == 100) {
+				continue;
 			}
 			Document page = Jsoup.parse(driver.getPageSource());
 			Elements body = page.select("div.BorderGrid-cell");
 			Element ulist = body.select("ul.list-style-none").last();
+			Integer contribs = 0;
 
 			if (body != null) {
+
+				contribs = Integer.parseInt(body.select("span.Counter").last().attr("title"));
 
 				Map<String, Double> languages = new HashMap<String, Double>();
 
@@ -74,12 +106,13 @@ public class ProjectScrapper {
 				Element borderRow = borderSpacious.select("div.BorderGrid-row").first();
 				Elements borders = borderRow.select("div.mt-2");
 
-				Integer stars = 0;
+				Double stars = 0.0;
 				if (!borders.isEmpty()) {
 					for (Element div : borders) {
 						if (div.select("a.Link--muted").text().contains("star")) {
-							String star = div.select("a.Link--muted").text();
-							stars = Integer.parseInt(stripNonDigits(star));
+							String star = div.select("a.Link--muted").text().replaceAll(" stars", "")
+									.replaceAll(" star", "").trim();
+							stars = convertToLargerNumber(star);
 						}
 					}
 				} else {
@@ -100,68 +133,70 @@ public class ProjectScrapper {
 						Integer.parseInt(dateSplit[2]));
 				Integer commits = Integer.parseInt(cmts.replaceAll(",", ""));
 
-				Project pj = new Project(projectName, gitUrl, stars, commits, languages.get(maxKey), maxKey, pushed);
-				dataset.add(pj);
+				String apiUrl = "https://api.github.com/repos/" + organization.toLowerCase() + "/" + projectName;
+				try {
+					URL url = new URL(apiUrl);
+					HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
+					httpConn.setRequestMethod("GET");
+					httpConn.setRequestProperty("Accept", "application/json");
+					byte[] message = (IOEnum.USER_TOKEN.getProperty()).getBytes("UTF-8");
+					String basicAuth = Base64.getEncoder().encodeToString(message);
+					httpConn.setRequestProperty("Authorization", "Basic " + basicAuth);
+					try (InputStream is = httpConn.getInputStream();
+							Reader reader = new InputStreamReader(is, StandardCharsets.UTF_8)) {
 
-//				String apiUrl = "https://api.github.com/repos/" + organization.toLowerCase() + "/" + projectName;
-//
-//				try (InputStream is = new URL(apiUrl).openStream();
-//						Reader reader = new InputStreamReader(is, StandardCharsets.UTF_8)) {
-//
-//					Gson gson = new Gson();
-//					GitRepository gr = gson.fromJson(reader, GitRepository.class);
-//
-//					separatedDate = gr.getCreated_at().split("T");
-//					dateSplit = separatedDate[0].split("-");
-//					LocalDate created = LocalDate.of(Integer.parseInt(dateSplit[0]), Integer.parseInt(dateSplit[1]),
-//							Integer.parseInt(dateSplit[2]));
-//
-//					Project pj = new Project(projectName, gitUrl, stars, commits, gr.getFork(), created, pushed,
-//							languages.get(maxKey), maxKey);
-//					dataset.add(pj);
-//				} catch (Exception e) {
-//					System.out.println(e.getMessage());
-//				}
+						Gson gson = new Gson();
+						GitRepository gr = gson.fromJson(reader, GitRepository.class);
+
+						separatedDate = gr.getCreated_at().split("T");
+						dateSplit = separatedDate[0].split("-");
+						LocalDate created = LocalDate.of(Integer.parseInt(dateSplit[0]), Integer.parseInt(dateSplit[1]),
+								Integer.parseInt(dateSplit[2]));
+
+						Project pj = new Project(organization.toLowerCase(), projectName, gitUrl, stars, commits,
+								contribs, gr.getFork(), created, pushed, languages.get(maxKey), maxKey);
+						dataset.add(pj);
+					} catch (Exception e) {
+						System.out.println(e.getMessage());
+					}
+
+				} catch (Exception e) {
+					System.out.println(e.getMessage());
+				}
 
 			}
-			driver.close();
+			driver.quit();
 
 		}
 		return dataset;
 	}
 
-	private static String stripNonDigits(final CharSequence input) {
-		final StringBuilder sb = new StringBuilder(input.length());
-		for (int i = 0; i < input.length(); i++) {
-			final char c = input.charAt(i);
-			if (c > 47 && c < 58) {
-				sb.append(c);
-			}
-		}
-		return sb.toString();
+	public static Double convertToLargerNumber(String string) {
+		String multiplier = string.substring(string.length() - 1).toLowerCase();
+		if (multiplier.equals("k"))
+			return Double.parseDouble(string.substring(0, string.length() - 1)) * 1000;
+		else if (multiplier.equals("m"))
+			return Double.parseDouble(string.substring(0, string.length() - 1)) * 1000000;
+		else
+			return 0.0;
 	}
 
-//	public static class GitRepository {
-//		private Boolean fork;
-//		private String created_at;
-//		private Integer size;
-//		private Integer forks_count;
-//
-//		public Boolean getFork() {
-//			return fork;
-//		}
-//
-//		public String getCreated_at() {
-//			return created_at;
-//		}
-//
-//		public Integer getSize() {
-//			return size;
-//		}
-//
-//		public Integer getForks_count() {
-//			return forks_count;
-//		}
-//	}
+	public static class GitRepository {
+		private Boolean fork;
+		private String created_at;
+		private Integer forks_count;
+
+		public Boolean getFork() {
+			return fork;
+		}
+
+		public String getCreated_at() {
+			return created_at;
+		}
+
+		public Integer getForks_count() {
+			return forks_count;
+		}
+	}
 
 }
